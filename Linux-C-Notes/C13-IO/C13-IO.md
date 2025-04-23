@@ -443,6 +443,117 @@ p1->read -> p2->write
 
 ```
 
+答案源码：
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+
+#define BUFFER_SIZE 4096
+
+int delete_line(const char* filename, int line_to_delete) {
+    int fd_read, fd_write;
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    off_t read_offset = 0, write_offset = 0;
+    int current_line = 1;
+    
+    // 打开文件用于读取
+    fd_read = open(filename, O_RDONLY);
+    if (fd_read == -1) {
+        perror("无法打开文件进行读取");
+        return -1;
+    }
+    
+    // 打开文件用于写入
+    fd_write = open(filename, O_RDWR);
+    if (fd_write == -1) {
+        perror("无法打开文件进行写入");
+        close(fd_read);
+        return -1;
+    }
+    
+    // 计算要删除的行的偏移量
+    char ch;
+    while (current_line < line_to_delete) {
+        if (read(fd_read, &ch, 1) != 1) {
+            // 文件行数少于要删除的行
+            close(fd_read);
+            close(fd_write);
+            return -1;
+        }
+        
+        if (ch == '\n') {
+            current_line++;
+        }
+        
+        read_offset++;
+        write_offset++;
+    }
+    
+    // 找到要删除的行的结束位置
+    while (read(fd_read, &ch, 1) == 1) {
+        read_offset++;
+        if (ch == '\n') {
+            break; // 找到行尾
+        }
+    }
+    
+    // 从要删除行的下一行开始读取并写入到要删除行的位置
+    lseek(fd_read, read_offset, SEEK_SET);
+    lseek(fd_write, write_offset, SEEK_SET);
+    
+    // 读取剩余内容并写入
+    while ((bytes_read = read(fd_read, buffer, BUFFER_SIZE)) > 0) {
+        if (write(fd_write, buffer, bytes_read) != bytes_read) {
+            perror("写入错误");
+            close(fd_read);
+            close(fd_write);
+            return -1;
+        }
+    }
+    
+    // 截断文件以删除多余内容
+    off_t file_size = lseek(fd_read, 0, SEEK_END);
+    if (ftruncate(fd_write, file_size - (read_offset - write_offset)) == -1) {
+        perror("截断文件失败");
+        close(fd_read);
+        close(fd_write);
+        return -1;
+    }
+    
+    // 关闭文件
+    close(fd_read);
+    close(fd_write);
+    
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "用法: %s <文件名> <要删除的行号>\n", argv[0]);
+        return 1;
+    }
+    
+    int line_to_delete = atoi(argv[2]);
+    if (line_to_delete <= 0) {
+        fprintf(stderr, "错误: 行号必须是正整数\n");
+        return 1;
+    }
+    
+    if (delete_line(argv[1], line_to_delete) != 0) {
+        fprintf(stderr, "删除行失败\n");
+        return 1;
+    }
+    
+    printf("成功删除第 %d 行\n", line_to_delete);
+    return 0;
+}
+```
+
 ### 原子操作
 
 指不可分割的操作
