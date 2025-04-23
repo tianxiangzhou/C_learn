@@ -2,7 +2,7 @@
 Linux环境C语言开发学习笔记
 
 > [!important]
-> 笔记是基于[sinlatansen/Linux-C-Notes](https://github.com/sinlatansen/Linux-C-Notes)的Linux-C-Notes，该作者的笔记内容十分详细，结构十分清晰，在此对该作者表示感谢
+> 笔记是基于[sinlatansen/Linux-C-Notes](https://github.com/sinlatansen/Linux-C-Notes)的Linux-C-Notes，该作者的笔记内容十分详细，结构十分清晰，在此对该作者表示感谢。
 >
 > 由于笔记原作者的个人原因，笔记目前并不是完整的，还缺少一部分内容。后续内容将随着本人的学习而逐步完善，敬请期待... 
 
